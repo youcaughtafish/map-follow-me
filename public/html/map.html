@@ -3,10 +3,9 @@
 
 <head>
   <meta charset='utf-8' />
-  <title></title>
+  <title>Map Follow Me</title>
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.12.0/mapbox-gl.js'></script>
-  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.12.0/mapbox-gl.css' rel='stylesheet' />
+  <script src="js/map-follow-me-bundle.js"></script>
   <style>
   body {
     margin: 0;
@@ -19,31 +18,26 @@
     bottom: 0;
     width: 100%;
   }
+
+  .to-bottom {
+    position: fixed;
+    bottom: 0px;
+  }
+
+  #bottom-nav {
+    width: 100%;
+    background-color: black;
+    color: white;
+    padding: 2rem;
+  }
   </style>
 </head>
 
 <body>
-  <div id='map'></div>
+  <div id="map"></div>
+  <div id="bottom-nav" class="to-bottom">☰</div>
   <script>
-  mapboxgl.accessToken = 'pk.eyJ1IjoiZHptb29yZSIsImEiOiJjYVZtSW1FIn0.5MByMdfHMEp0QV6beF5UgQ';
-  var map = new mapboxgl.Map({
-    container: 'map', // container id
-    style: 'mapbox://styles/dzmoore/ciht76il500co95ly1m27njba', //stylesheet location
-    center: [0,0], // starting position
-    zoom: 1 // starting zoom
-  });
-
-  map.on('load', function() {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(function(position) { 
-        console.log(JSON.stringify(position.coords.latitude +', ' +position.coords.longitude)); 
-        map.flyTo({
-          center: [ position.coords.longitude, position.coords.latitude ],
-          zoom: 13
-        });
-      });
-    }
-  });
+    require('map-follow-me');
   </script>
 </body>
 
