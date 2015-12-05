@@ -10,6 +10,7 @@ router.get('/', function(req, res, next) {
   res.sendFile(testPath);
 });
 
+/* GET js bundle */
 router.get('/js/map-follow-me-bundle.js', function(req, res) { 
   res.setHeader('content-type', 'application/javascript'); 
   browserify()
@@ -17,5 +18,7 @@ router.get('/js/map-follow-me-bundle.js', function(req, res) {
     .bundle() 
     .pipe(res); 
 });
+
+
 
 module.exports = router;

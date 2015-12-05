@@ -4,9 +4,14 @@
  * Module dependencies.
  */
 
-var app = require('../app');
+var mapFollowMeApp = require('../app');
+var app = mapFollowMeApp.app;
 var debug = require('debug')('map-follow-me:server');
-var http = require('http');
+var server = require('http').Server(app);
+
+var io = require('socket.io')(server);
+
+io.on('connection', mapFollowMeApp.io.onConnection);
 
 /**
  * Get port from environment and store in Express.
@@ -19,7 +24,7 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+// var server = http.Server(app);
 
 /**
  * Listen on provided port, on all network interfaces.

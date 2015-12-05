@@ -5,6 +5,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
+
 var routes = require('./routes/index');
 
 var app = express();
@@ -54,5 +55,23 @@ app.use(function(err, req, res, next) {
   });
 });
 
+function ioOnConnection(socket) {
+  console.log('a user connected');
 
-module.exports = app;
+  socket.on('disconnect', function(){
+    console.log('user disconnected');
+  });
+  
+  socket.on('location update', function(msg){
+    console.log('location update: ' + msg);
+    socket.emit('location update', msg);
+  });
+}
+
+
+module.exports = {
+  app: app,
+  io:  {
+    onConnection: ioOnConnection
+  }
+}
