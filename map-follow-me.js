@@ -8,9 +8,42 @@ var url = require('url');
 
 var parsedUrl = url.parse(window.location.href);
 
+var users = {};
+
 var sessionSocket = io('http://' + parsedUrl.host + parsedUrl.pathname);
 sessionSocket.on('location update', function(msg) {
   console.log('heard location update: ' + JSON.stringify(msg));
+
+  if (users.hasOwnProperty(msg.user.id)) {
+    var user = users[msg.user.id];
+    user.point.coordinates = msg.lngLat;
+    user.source.setData(user.point);
+    
+  } else {
+    var userPoint = {
+      "type": "Point",
+      "coordinates": msg.lngLat
+    };
+
+    users[msg.user.id] = {
+      point: userPoint,
+      source: new mapboxgl.GeoJSONSource({
+        data: userPoint
+      })
+    };
+
+    map.addSource(msg.user.id, users[msg.user.id].source);
+
+    map.addLayer({
+      "id": msg.user.id,
+      "type": "symbol",
+      "source": msg.user.id,
+      "layout": {
+        "icon-image": "car-24",
+      }
+    });
+  }
+
 });
 
 var periodicPositionId = 0;
@@ -30,7 +63,7 @@ var map = new mapboxgl.Map({
   console.log('map.moveend');
 });
 
-map.on('load', function() {
+map.on('style-load', function() {
   if ('geolocation' in navigator) {
     navigator.geolocation.getCurrentPosition(function(position) { 
       console.log(JSON.stringify(position.coords.latitude +', ' +position.coords.longitude)); 
@@ -40,6 +73,7 @@ map.on('load', function() {
       });
     });
   }
+
 });
 
 $('#share-location-menu-item').on('click', function() {
@@ -54,6 +88,7 @@ $('#share-location-menu-item').on('click', function() {
     periodicPositionId = window.setInterval(function() {
       navigator.geolocation.getCurrentPosition(function(position) { 
         var locationUpdateMsg = { 
+          user: { id: sessionSocket.id },
           lngLat: [ position.coords.longitude, position.coords.latitude ] 
         };
 
