@@ -4,7 +4,14 @@ require('bootstrap');
 
 var mapboxgl = require('mapbox-gl');
 var io = require('socket.io-client');
-var socket = io('http://localhost:3000');
+var url = require('url');
+
+var parsedUrl = url.parse(window.location.href);
+
+var sessionSocket = io('http://' + parsedUrl.host + parsedUrl.pathname);
+sessionSocket.on('location update', function(msg) {
+  console.log('heard location update: ' + JSON.stringify(msg));
+});
 
 var periodicPositionId = 0;
 var $menuItem = $('#share-location-menu-item');
@@ -21,10 +28,6 @@ var map = new mapboxgl.Map({
 
 }).on('moveend', function(e) {
   console.log('map.moveend');
-  navigator.geolocation.getCurrentPosition(function(position) { 
-    console.log('emitting location update');
-    socket.emit('location update', { lngLat: [ position.coords.longitude, position.coords.latitude ] });
-  });
 });
 
 map.on('load', function() {
@@ -50,7 +53,12 @@ $('#share-location-menu-item').on('click', function() {
   } else {
     periodicPositionId = window.setInterval(function() {
       navigator.geolocation.getCurrentPosition(function(position) { 
-        socket.emit('location update', {lngLat: [ position.coords.longitude, position.coords.latitude ] });
+        var locationUpdateMsg = { 
+          lngLat: [ position.coords.longitude, position.coords.latitude ] 
+        };
+
+        console.log('emmitting location update: ' + JSON.stringify(locationUpdateMsg));
+        sessionSocket.emit('location update', locationUpdateMsg);
       });
     }, 1000);
 

@@ -6,12 +6,10 @@
 
 var mapFollowMeApp = require('../app');
 var app = mapFollowMeApp.app;
+var server = mapFollowMeApp.server;
+
 var debug = require('debug')('map-follow-me:server');
-var server = require('http').Server(app);
 
-var io = require('socket.io')(server);
-
-io.on('connection', mapFollowMeApp.io.onConnection);
 
 /**
  * Get port from environment and store in Express.
@@ -19,12 +17,6 @@ io.on('connection', mapFollowMeApp.io.onConnection);
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
-
-/**
- * Create HTTP server.
- */
-
-// var server = http.Server(app);
 
 /**
  * Listen on provided port, on all network interfaces.
