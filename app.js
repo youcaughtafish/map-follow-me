@@ -114,7 +114,16 @@ function onSession(session) {
 
       sessionSocket.on('disconnect', function() {
         console.log('socket: ' + sessionSocketId + ' disconnecting from session: ' + JSON.stringify(session));
-        sessions[sessionId]--;
+        if (--sessions[sessionId]) {
+          var clientDisconnectMsg = { 
+            client: { id: sessionSocketId },
+            session: { id: sessionId }
+          };
+
+          console.log('emitting client disconnect: ' + JSON.stringify(clientDisconnectMsg));
+          
+          ioSession.emit('client disconnect', clientDisconnectMsg);
+        }
       });
     });
   }

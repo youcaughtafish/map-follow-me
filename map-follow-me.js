@@ -8,43 +8,63 @@ var url = require('url');
 
 var parsedUrl = url.parse(window.location.href);
 
-var users = {};
+var sessionId = parsedUrl.pathname;
+
+var clientSessions = {};
 
 var sessionSocket = io('http://' + parsedUrl.host + parsedUrl.pathname);
 sessionSocket.on('location update', function(msg) {
   console.log('heard location update: ' + JSON.stringify(msg));
 
-  if (users.hasOwnProperty(msg.user.id)) {
-    var user = users[msg.user.id];
-    user.point.coordinates = msg.lngLat;
-    user.source.setData(user.point);
+  if (clientSessions.hasOwnProperty(msg.client.id)) {
+    if (msg.hasOwnProperty('removeFromMap')) {
+      removeClientFromMap(msg.client);
+
+    } else {
+      var clientSession = clientSessions[msg.client.id];
+      clientSession.point.coordinates = msg.lngLat;
+      clientSession.source.setData(clientSession.point);
+    }
     
   } else {
-    var userPoint = {
+    var clientSessionPoint = {
       "type": "Point",
       "coordinates": msg.lngLat
     };
 
-    users[msg.user.id] = {
-      point: userPoint,
+    clientSessions[msg.client.id] = {
+      point: clientSessionPoint,
       source: new mapboxgl.GeoJSONSource({
-        data: userPoint
+        data: clientSessionPoint
       })
     };
 
-    map.addSource(msg.user.id, users[msg.user.id].source);
+    map.addSource(msg.client.id, clientSessions[msg.client.id].source);
 
     map.addLayer({
-      "id": msg.user.id,
+      "id": msg.client.id,
       "type": "symbol",
-      "source": msg.user.id,
+      "source": msg.client.id,
       "layout": {
         "icon-image": "car-24",
       }
     });
   }
-
 });
+
+sessionSocket.on('client disconnect', function(msg) {
+  console.log('heard client disconnect: ' + JSON.stringify(msg));
+
+  removeClientFromMap(msg.client);
+});
+
+function removeClientFromMap(client) {
+  if (clientSessions.hasOwnProperty(client.id)) {
+    map.removeLayer(client.id);
+    map.removeSource(client.id);
+    delete clientSessions[client.id];
+  }
+}
 
 var periodicPositionId = 0;
 var $menuItem = $('#share-location-menu-item');
@@ -63,7 +83,7 @@ var map = new mapboxgl.Map({
   console.log('map.moveend');
 });
 
-map.on('style-load', function() {
+map.on('load', function() {
   if ('geolocation' in navigator) {
     navigator.geolocation.getCurrentPosition(function(position) { 
       console.log(JSON.stringify(position.coords.latitude +', ' +position.coords.longitude)); 
@@ -73,10 +93,14 @@ map.on('style-load', function() {
       });
     });
   }
-
 });
 
 $('#share-location-menu-item').on('click', function() {
+  var locationUpdateMsg = { 
+    session: { id: sessionId },
+    client: { id: sessionSocket.id }
+  };
+
   if (periodicPositionId) {
     window.clearInterval(periodicPositionId);
 
@@ -84,18 +108,20 @@ $('#share-location-menu-item').on('click', function() {
 
     periodicPositionId = 0;
 
+    locationUpdateMsg.removeFromMap = true;
+    sessionSocket.emit('location update', locationUpdateMsg);
+
   } else {
     periodicPositionId = window.setInterval(function() {
       navigator.geolocation.getCurrentPosition(function(position) { 
-        var locationUpdateMsg = { 
-          user: { id: sessionSocket.id },
-          lngLat: [ position.coords.longitude, position.coords.latitude ] 
-        };
+        locationUpdateMsg.lngLat =
+          [ position.coords.longitude, position.coords.latitude ];
 
         console.log('emmitting location update: ' + JSON.stringify(locationUpdateMsg));
+
         sessionSocket.emit('location update', locationUpdateMsg);
       });
-    }, 1000);
+    }, 3000);
 
     var menuItemTxt = $menuItem.text();
     $menuItem.text('✓ ' + menuItemTxt);
