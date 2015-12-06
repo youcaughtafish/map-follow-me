@@ -19,6 +19,10 @@ router.get('/js/map-follow-me-bundle.js', function(req, res) {
     .pipe(res); 
 });
 
+router.get('/css/bootstrap.css', function(req, res) {
+  res.sendFile(path.join(__dirname + '/../bower_components/bootstrap/dist/css/bootstrap.css'));
+});
+
 
 
 module.exports = router;

@@ -6,6 +6,7 @@
   <title>Map Follow Me</title>
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
   <script src="js/map-follow-me-bundle.js"></script>
+  <link rel="stylesheet" href="css/bootstrap.css">
   <style>
   body {
     margin: 0;
@@ -19,25 +20,51 @@
     width: 100%;
   }
 
-  .to-bottom {
+  .to-bottom-right {
     position: fixed;
     bottom: 0px;
     right: 0px;
   }
 
-  #bottom-nav {
+  #menu-btn {
     border-radius: 0.4rem;
     background-color: black;
     color: white;
-    margin: 0 1rem 1rem 0;
     padding: 1.2rem;
+  }
+
+  #nav-container {
+    margin: 0 1rem 1rem 0;
+  }
+
+  ul.dropdown-menu {
+    background-color: black;
+    color: white;
+  }
+
+  .dropdown-menu > li > a {
+    color: white;
+  }
+
+  .dropdown-menu > li > a:hover {
+    color: black;
+    background-color: gray;
   }
   </style>
 </head>
 
 <body>
-  <div id="map"></div>
-  <div id="bottom-nav" class="to-bottom">☰</div>
+<div id="map"></div>
+<div class="container">
+  <div id="nav-container" class="btn-group dropup to-bottom-right pull-right">
+    <button id="menu-btn" type="button" class="btn btn-default dropdown-toggle" 
+        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">☰</button>
+
+    <ul class="dropdown-menu">
+      <li><a id="share-location-menu-item" href="#">Share Location</a></li>
+    </ul>
+  </div>
+</div>
   <script>
     require('map-follow-me');
   </script>
