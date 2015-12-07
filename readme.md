@@ -27,6 +27,7 @@
 * Tests! - Currently, there are no tests
 * Grunt - Installation currently involves multiple commands
 * Browersify the front-end packages ahead of time to improve page load speed
+* Better logging (instead of `console.log` everywhere)
 
 #### Possible Future Functionality
 * Android app version (`WebView`) that can run in the background

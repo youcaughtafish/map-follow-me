@@ -1,0 +1,48 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: #00B7FF;
+}
+
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.to-bottom-right {
+  position: fixed;
+  bottom: 0px;
+  right: 0px;
+}
+
+#menu-btn {
+  border-radius: 0.4rem;
+  background-color: black;
+  color: white;
+  padding: 1.2rem;
+}
+
+#nav-container {
+  margin: 0 1rem 1rem 0;
+}
+
+ul.dropdown-menu {
+  background-color: black;
+  color: white;
+}
+
+.dropdown-menu > li > a {
+  color: white;
+}
+
+.dropdown-menu > li > a:hover {
+  color: black;
+  background-color: gray;
+}
