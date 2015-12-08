@@ -91,7 +91,7 @@ map.on('load', function() {
         center: [ position.coords.longitude, position.coords.latitude ],
         zoom: 13
       });
-    });
+    }, function() {}, { enableHighAccuracy: true });
   }
 });
 
