@@ -66,7 +66,7 @@ function removeClientFromMap(client) {
   }
 }
 
-var periodicPositionId = 0;
+var positionWatchId = 0;
 var $menuItem = $('#share-location-menu-item');
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZHptb29yZSIsImEiOiJjYVZtSW1FIn0.5MByMdfHMEp0QV6beF5UgQ';
@@ -101,27 +101,25 @@ $('#share-location-menu-item').on('click', function() {
     client: { id: sessionSocket.id }
   };
 
-  if (periodicPositionId) {
-    window.clearInterval(periodicPositionId);
+  if (positionWatchId) {
+    navigator.geolocation.clearWatch(positionWatchId);
 
     $menuItem.text($menuItem.text().substring(2));
 
-    periodicPositionId = 0;
+    positionWatchId = 0;
 
     locationUpdateMsg.removeFromMap = true;
     sessionSocket.emit('location update', locationUpdateMsg);
 
   } else {
-    periodicPositionId = window.setInterval(function() {
-      navigator.geolocation.getCurrentPosition(function(position) { 
-        locationUpdateMsg.lngLat =
-          [ position.coords.longitude, position.coords.latitude ];
+    positionWatchId = navigator.geolocation.watchPosition(function(position) { 
+      locationUpdateMsg.lngLat =
+        [ position.coords.longitude, position.coords.latitude ];
 
-        console.log('emmitting location update: ' + JSON.stringify(locationUpdateMsg));
+      console.log('emmitting location update: ' + JSON.stringify(locationUpdateMsg));
 
-        sessionSocket.emit('location update', locationUpdateMsg);
-      });
-    }, 3000);
+      sessionSocket.emit('location update', locationUpdateMsg);
+    }, function() {}, { enableHighAccuracy: true });
 
     var menuItemTxt = $menuItem.text();
     $menuItem.text('✓ ' + menuItemTxt);
