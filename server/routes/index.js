@@ -11,12 +11,12 @@ module.exports = function routes(params) {
   router.get('/', function(req, res, next) {
     console.log('redirecting to: /s/' + sessionId);
     var sessionId = shortid.generate();
-    res.redirect('/s/' + sessionId);
+    res.redirect('/' + sessionId);
    });
    
-  router.get('/s/:sessionId', function(req, res, next) {
+  router.get('/:sessionId', function(req, res, next) {
     var sessionId = req.params.sessionId;
-    params.onSession({ id: '/s/'+sessionId });
+    params.onSession({ id: '/'+sessionId });
 
     var mapPath = path.join(__dirname + './../../client/public/html/map.html');
     console.log('dirname: ' + __dirname);
