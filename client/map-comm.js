@@ -27,6 +27,10 @@ var MapComm = module.exports = function(params) {
   });
 };
 
+MapComm.prototype.getUserId = function getUserId() {
+  return this._sessionSocket.id;
+};
+
 MapComm.prototype.updateLocation = function(params) {
   var msg = { 
     session: { id: this._sessionId },

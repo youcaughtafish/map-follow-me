@@ -24,8 +24,11 @@ var map = new Map(
   }
 );
 
-var parsedUrl = url.parse(window.location.href);
+var parsedUrl = url.parse(window.location.href, true);
 var sessionId = parsedUrl.pathname;
+var followId = !!parsedUrl.query.following ? parsedUrl.query.following : '';
+var dummyMovement = !!parsedUrl.query.dummyMovement;
+
 var users = {};
 
 function isExistingUser(id) {
@@ -63,6 +66,13 @@ var mapComm = new MapComm({
         lngLat: msg.lngLat,
         itemData: users[msg.user.id]
       });
+
+      if (!!followId && followId === msg.user.id) {
+        map.jumpTo({
+          center: msg.lngLat,
+          zoom: 16
+        });
+      }
     }
   },
 
@@ -72,31 +82,93 @@ var mapComm = new MapComm({
 });
 
 var positionWatchId = 0;
+var dummyMovementId = 0;
+var dummyMovementLngLat;
+var dummyMovementFactor = -0.0000134;
+
 var $broadcastMenuItem = $('#broadcast-location-menu-item');
-var $shareMenuItem = $('#share-location-menu-item');
+var $followMenuItem = $('#follow-location-menu-item');
+var checkmarkPrefix = '✓ ';
 
-$shareMenuItem.on('click', function() {
+if (!followId || followId !== mapComm.getUserId()) {
+  $followMenuItem.hide();
+  setAsNotFollowing();
+}
 
+function setAsFollowing() {
+  var menuTxt = $followMenuItem.text();
+  $followMenuItem.text(checkmarkPrefix + $followMenuItem.text());
+
+  followId = mapComm.getUserId();
+  window.history.pushState(null, 'following', '?following=' + followId);
+}
+
+function setAsNotFollowing() {
+  var menuTxt = $followMenuItem.text();
+  if (menuTxt.indexOf(checkmarkPrefix) >= 0) {
+    $followMenuItem.text($followMenuItem.text().substring(checkmarkPrefix.length));
+    followId = '';
+    window.history.pushState(null, 'following', '?');
+  }
+}
+
+$followMenuItem.on('click', function() {
+  if (!!followId) {
+    setAsNotFollowing();
+
+  } else {
+    setAsFollowing();
+  }
 });
 
 $broadcastMenuItem.on('click', function() {
-  if (positionWatchId) {
-    geo.clearWatch(positionWatchId);
+  if (positionWatchId || dummyMovementId) {
+    $followMenuItem.hide();
 
-    $broadcastMenuItem.text($broadcastMenuItem.text().substring(2));
+    setAsNotFollowing();
 
-    positionWatchId = 0;
+    if (dummyMovement) {
+      clearInterval(dummyMovementId);
+      dummyMovementId = 0;
+
+    } else {
+      geo.clearWatch(positionWatchId);
+
+      positionWatchId = 0;
+    }
 
     mapComm.stopBroadcasting();
+    $broadcastMenuItem.text($broadcastMenuItem.text().substring(checkmarkPrefix.length));
+
 
   } else {
-    positionWatchId = geo.watchPosition(function watchPosition(position) { 
-      var lngLat = [ position.coords.longitude, position.coords.latitude ];
+    $followMenuItem.show();
 
-      mapComm.updateLocation({ lngLat: lngLat });
-    });
+    if (dummyMovement) {
+      geo.getCurrentPosition(function getPosition(position) {
+        dummyMovementLngLat = [ position.coords.longitude, position.coords.latitude ];
+
+        dummyMovementId = setInterval(function() {
+          dummyMovementLngLat = [ 
+            dummyMovementLngLat[0] + (Math.random() * dummyMovementFactor) - dummyMovementFactor, 
+            dummyMovementLngLat[1] + (Math.random() * dummyMovementFactor) - dummyMovementFactor 
+          ];
+
+          mapComm.updateLocation({ 
+            lngLat: dummyMovementLngLat
+          });
+        }, 500);
+      });
+
+    } else {
+      positionWatchId = geo.watchPosition(function watchPosition(position) { 
+        var lngLat = [ position.coords.longitude, position.coords.latitude ];
+
+        mapComm.updateLocation({ lngLat: lngLat });
+      });
+    }
 
     var menuItemTxt = $broadcastMenuItem.text();
-    $broadcastMenuItem.text('✓ ' + menuItemTxt);
+    $broadcastMenuItem.text(checkmarkPrefix + menuItemTxt);
   }
 });

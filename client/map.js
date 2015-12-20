@@ -54,6 +54,10 @@ Map.prototype.flyTo = function(params) {
   this._map.flyTo(params);
 };
 
+Map.prototype.jumpTo = function(params) {
+  this._map.jumpTo(params);
+};
+
 Map.prototype.removeFromMap = function removeFromMap(id) {
   this._map.removeLayer(id);
   this._map.removeSource(id);
