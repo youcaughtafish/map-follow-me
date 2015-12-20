@@ -4,7 +4,7 @@
  * Module dependencies.
  */
 
-var mapFollowMeApp = require('../app');
+var mapFollowMeApp = require('../index');
 var app = mapFollowMeApp.app;
 var server = mapFollowMeApp.server;
 
