@@ -8,37 +8,47 @@ var url = require('url');
 var geo = require('./geolocation');
 var Map = require('./map');
 var MapComm = require('./map-comm');
-
-var map = new Map(
-  {
-    accessToken: 'pk.eyJ1IjoiZHptb29yZSIsImEiOiJjYVZtSW1FIn0.5MByMdfHMEp0QV6beF5UgQ',
-    mapStyle: 'mapbox://styles/dzmoore/ciht76il500co95ly1m27njba'
-  }, 
-  function onLoad() {
-    geo.getCurrentPosition(function getPosition(position) {
-      this.flyTo({
-        center: [ position.coords.longitude, position.coords.latitude ],
-        zoom: 13
-      });
-    }.bind(this));
-  }
-);
+var ReactDOM = require('react-dom');
+var React = require('react');
+var PopupMenu = require('./views/index.jsx');
 
 var parsedUrl = url.parse(window.location.href, true);
 var sessionId = parsedUrl.pathname;
-var followId = !!parsedUrl.query.following ? parsedUrl.query.following : '';
-var dummyMovement = !!parsedUrl.query.dummyMovement;
+var urlQueryMap = parsedUrl.query;
+
+var positionWatchId = 0;
+var followId = urlQueryMap.following ? parsedUrl.query.following : '';
+
+var dummyMovementId = 0;
+var dummyMovement = parsedUrl.query.dummyMovement;
+var dummyMovementFactor = -0.0000134;
+var dummyMovementLngLat;
 
 var users = {};
 
-function isExistingUser(id) {
-  return users.hasOwnProperty(id);
-}
+var menuItems = [
+  { 
+    menuItemId: 'broadcast-location-menu-item',
+    menuItemTitle: 'Broadcast Location',
+    initiallyChecked: false,
+    onClick: handleBroadcastLocationToggle
+  },
+  { 
+    menuItemId: 'follow-location-menu-item',
+    menuItemTitle: 'Follow Location',
+    initiallyChecked: false,
+    onClick: handleFollowLocationToggle
+  }
+];
 
-function removeFromMap(id) {
-  map.removeFromMap(id);
-  delete users[id];
-}
+ReactDOM.render(
+  <PopupMenu 
+    menuId='nav-container' 
+    popupMenuBtnId='menu-btn' 
+    menuItems={menuItems} 
+    checkmark='✓ '/>,
+  document.getElementById('nav-outer-container')
+);
 
 var mapComm = new MapComm({
   url: 'http://' + parsedUrl.host + parsedUrl.pathname,
@@ -67,7 +77,7 @@ var mapComm = new MapComm({
         itemData: users[msg.user.id]
       });
 
-      if (!!followId && followId === msg.user.id) {
+      if (followId && followId === msg.user.id) {
         map.jumpTo({
           center: msg.lngLat,
           zoom: 16
@@ -81,68 +91,31 @@ var mapComm = new MapComm({
   }
 });
 
-var positionWatchId = 0;
-var dummyMovementId = 0;
-var dummyMovementLngLat;
-var dummyMovementFactor = -0.0000134;
+function writeUrlQuery() {
+  var newQueryString = '?';
+  Object.keys(urlQueryMap).forEach(function(key, i) {
+    if (i > 0) newQueryString += '&';
 
-var $broadcastMenuItem = $('#broadcast-location-menu-item');
-var $followMenuItem = $('#follow-location-menu-item');
-var checkmarkPrefix = '✓ ';
+    newQueryString += encodeURIComponent(key) + '=' + encodeURIComponent(urlQueryMap[key]);
+  });
 
-if (!followId || followId !== mapComm.getUserId()) {
-  $followMenuItem.hide();
-  setAsNotFollowing();
+  window.history.pushState(null, null, newQueryString);
 }
 
-function setAsFollowing() {
-  var menuTxt = $followMenuItem.text();
-  $followMenuItem.text(checkmarkPrefix + $followMenuItem.text());
-
-  followId = mapComm.getUserId();
-  window.history.pushState(null, 'following', '?following=' + followId);
+function addFollowingToUrl() {
+  urlQueryMap.following = mapComm.getUserId();
+  writeUrlQuery();
 }
 
-function setAsNotFollowing() {
-  var menuTxt = $followMenuItem.text();
-  if (menuTxt.indexOf(checkmarkPrefix) >= 0) {
-    $followMenuItem.text($followMenuItem.text().substring(checkmarkPrefix.length));
-    followId = '';
-    window.history.pushState(null, 'following', '?');
+function removeFollowingFromUrl() {
+  if ('following' in urlQueryMap) {
+    delete urlQueryMap.following;
+    writeUrlQuery();
   }
 }
 
-$followMenuItem.on('click', function() {
-  if (!!followId) {
-    setAsNotFollowing();
-
-  } else {
-    setAsFollowing();
-  }
-});
-
-$broadcastMenuItem.on('click', function() {
-  if (positionWatchId || dummyMovementId) {
-    $followMenuItem.hide();
-
-    setAsNotFollowing();
-
-    if (dummyMovement) {
-      clearInterval(dummyMovementId);
-      dummyMovementId = 0;
-
-    } else {
-      geo.clearWatch(positionWatchId);
-
-      positionWatchId = 0;
-    }
-
-    mapComm.stopBroadcasting();
-    $broadcastMenuItem.text($broadcastMenuItem.text().substring(checkmarkPrefix.length));
-
-
-  } else {
-    $followMenuItem.show();
+function handleBroadcastLocationToggle(checked) {
+  if (checked) {
 
     if (dummyMovement) {
       geo.getCurrentPosition(function getPosition(position) {
@@ -168,7 +141,53 @@ $broadcastMenuItem.on('click', function() {
       });
     }
 
-    var menuItemTxt = $broadcastMenuItem.text();
-    $broadcastMenuItem.text(checkmarkPrefix + menuItemTxt);
+  } else {
+    if (dummyMovement) {
+      clearInterval(dummyMovementId);
+      dummyMovementId = 0;
+
+    } else {
+      geo.clearWatch(positionWatchId);
+
+      positionWatchId = 0;
+    }
+
+    mapComm.stopBroadcasting();
   }
-});
+}
+
+function handleFollowLocationToggle(checked) {
+  if (checked) {
+    followId = mapComm.getUserId();
+    addFollowingToUrl();
+
+  } else {
+    followId = '';
+    removeFollowingFromUrl();
+  }
+}
+
+var map = new Map(
+  {
+    accessToken: 'pk.eyJ1IjoiZHptb29yZSIsImEiOiJjYVZtSW1FIn0.5MByMdfHMEp0QV6beF5UgQ',
+    mapStyle: 'mapbox://styles/dzmoore/ciht76il500co95ly1m27njba'
+  }, 
+  function onLoad() {
+    geo.getCurrentPosition(function getPosition(position) {
+      this.flyTo({
+        center: [ position.coords.longitude, position.coords.latitude ],
+        zoom: 13
+      });
+    }.bind(this));
+  }
+);
+
+function isExistingUser(id) {
+  return users.hasOwnProperty(id);
+}
+
+function removeFromMap(id) {
+  map.removeFromMap(id);
+  delete users[id];
+}
+

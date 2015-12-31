@@ -29,7 +29,8 @@ module.exports = function routes(params) {
     console.log('browserifying map-follow-me-bundle');
     res.setHeader('content-type', 'application/javascript'); 
     browserify()
-      .require(path.join(__dirname + './../../client/map-follow-me'), { expose: 'map-follow-me'} ) 
+      .require(path.join(__dirname + './../../client/map-follow-me'), { expose: 'map-follow-me'} )
+      .transform('reactify')
       .bundle() 
       .pipe(res); 
   });
