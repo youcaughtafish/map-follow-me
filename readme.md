@@ -12,6 +12,7 @@
 #### Primary Technologies Used
 * [Node.js](https://nodejs.org/)
 * [Mapbox](https://www.mapbox.com/)
+* [React](https://facebook.github.io/react/)
 * [express](http://expressjs.com/)
 * [socket.io](http://socket.io/)
 * [Browserify](http://browserify.org/)
