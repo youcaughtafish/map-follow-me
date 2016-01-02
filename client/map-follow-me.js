@@ -36,19 +36,10 @@ var menuItems = [
   { 
     menuItemId: 'follow-location-menu-item',
     menuItemTitle: 'Follow Location',
-    initiallyChecked: false,
+    initiallyChecked: !!followId,
     onClick: handleFollowLocationToggle
   }
 ];
-
-ReactDOM.render(
-  <PopupMenu 
-    menuId='nav-container' 
-    popupMenuBtnId='menu-btn' 
-    menuItems={menuItems} 
-    checkmark='✓ '/>,
-  document.getElementById('nav-outer-container')
-);
 
 var mapComm = new MapComm({
   url: 'http://' + parsedUrl.host + parsedUrl.pathname,
@@ -158,8 +149,11 @@ function handleBroadcastLocationToggle(checked) {
 
 function handleFollowLocationToggle(checked) {
   if (checked) {
-    followId = mapComm.getUserId();
-    addFollowingToUrl();
+    /* if we're not already following from the url */
+    if (!followId) {
+      followId = mapComm.getUserId();
+      addFollowingToUrl();
+    }
 
   } else {
     followId = '';
@@ -190,4 +184,14 @@ function removeFromMap(id) {
   map.removeFromMap(id);
   delete users[id];
 }
+
+
+ReactDOM.render(
+  <PopupMenu 
+    menuId='nav-container' 
+    popupMenuBtnId='menu-btn' 
+    menuItems={menuItems} 
+    checkmark='✓ '/>,
+  document.getElementById('nav-outer-container')
+);
 

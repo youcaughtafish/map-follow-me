@@ -72,6 +72,11 @@ var PopupDropdownMenuItem = React.createClass({
   propTypes: {
     onClick: React.PropTypes.func.isRequired
   },
+  componentDidMount: function() {
+    if (this.props.initiallyChecked) {
+      this.props.onClick(this.props.menuItemId, true);
+    }
+  },
   getInitialState: function() {
     return {
       checked: this.props.initiallyChecked || false
